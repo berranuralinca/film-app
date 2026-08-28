@@ -2,8 +2,8 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Movie;
 use App\Models\Genre;
+use App\Models\Movie;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 
@@ -13,7 +13,6 @@ class MovieController extends Controller
      * Display a listing of the resource.
      */
     public function index(Request $request)
-
     {
         // 1. N+1 Problemini engellemek için genre ilişkisini önceden yüklüyoruz (Eager Loading)
         $query = Movie::with('genre');
@@ -24,9 +23,9 @@ class MovieController extends Controller
         // 3. Film Adı veya Yönetmene Göre Arama
         if ($request->filled('search')) {
             $search = $request->search;
-            $query->where(function($q) use ($search) {
+            $query->where(function ($q) use ($search) {
                 $q->where('title', 'like', "%{$search}%")
-                  ->orWhere('director', 'like', "%{$search}%");
+                    ->orWhere('director', 'like', "%{$search}%");
             });
         }
         // 4. Sıralama Seçenekleri
@@ -53,6 +52,7 @@ class MovieController extends Controller
         $movies = $query->paginate(8)->withQueryString();
         // Filtre dropdown'u için tüm türleri çekiyoruz
         $genres = Genre::all();
+
         return view('movies.index', compact('movies', 'genres'));
     }
 
@@ -60,8 +60,10 @@ class MovieController extends Controller
     {
         // Formdaki dropdown için tüm türleri çekiyoruz
         $genres = Genre::all();
+
         return view('movies.create', compact('genres'));
     }
+
     // 2. Formdan Gelen Veriyi Kaydeden Metot
     public function store(Request $request)
     {
@@ -70,7 +72,7 @@ class MovieController extends Controller
             'title' => 'required|string|max:255',
             'genre_id' => 'required|exists:genres,id',
             'director' => 'required|string|max:255',
-            'release_year' => 'required|integer|min:1900|max:' . (date('Y') + 2),
+            'release_year' => 'required|integer|min:1900|max:'.(date('Y') + 2),
             'rating' => 'required|numeric|min:0|max:10',
             'description' => 'required|string|min:10',
             'poster_image' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048', // Max 2MB görsel
@@ -91,17 +93,18 @@ class MovieController extends Controller
         }
         // C) Veritabanına Kaydet
         Movie::create($validated);
+
         // D) Başarı Mesajıyla Listeye Yönlendir
         return redirect()->route('movies.index')->with('success', 'Film başarıyla eklendi! 🎬');
     }
-    
+
     /**
      * Display the specified resource.
      */
     public function show(Movie $movie)
     {
         // İlişkileri yüklüyoruz
-        $movie->load(['genre', 'comments' => function($query) {
+        $movie->load(['genre', 'comments' => function ($query) {
             $query->latest();
         }]);
 
@@ -112,10 +115,11 @@ class MovieController extends Controller
     /**
      * Show the form for editing the specified resource.
      */
-        // 4. Film Düzenleme Formunu Gösteren Metot
+    // 4. Film Düzenleme Formunu Gösteren Metot
     public function edit(Movie $movie)
     {
         $genres = Genre::all();
+
         return view('movies.edit', compact('movie', 'genres'));
     }
 
@@ -127,7 +131,7 @@ class MovieController extends Controller
             'title' => 'required|string|max:255',
             'genre_id' => 'required|exists:genres,id',
             'director' => 'required|string|max:255',
-            'release_year' => 'required|integer|min:1900|max:' . (date('Y') + 2),
+            'release_year' => 'required|integer|min:1900|max:'.(date('Y') + 2),
             'rating' => 'required|numeric|min:0|max:10',
             'description' => 'required|string|min:10',
             'poster_image' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048',

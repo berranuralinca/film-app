@@ -9,19 +9,21 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class Movie extends Model
 {
     protected $fillable = [
-        "genre_id",
-        "title",
-        "description",
-        "director",
-        "release_year",
-        "rating",
-        "poster_image"];
+        'genre_id',
+        'title',
+        'description',
+        'director',
+        'release_year',
+        'rating',
+        'poster_image'];
 
-        public function genre(): BelongsTo{
-            return $this->belongsTo(Genre::class);
-        }
+    public function genre(): BelongsTo
+    {
+        return $this->belongsTo(Genre::class);
+    }
 
-        public function comments(): HasMany{
-            return $this->hasMany(Comment::class);
-        }
+    public function comments(): HasMany
+    {
+        return $this->hasMany(Comment::class);
+    }
 }
