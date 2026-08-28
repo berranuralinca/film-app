@@ -112,24 +112,59 @@ class MovieController extends Controller
     /**
      * Show the form for editing the specified resource.
      */
+        // 4. Film Düzenleme Formunu Gösteren Metot
     public function edit(Movie $movie)
     {
-        //
+        $genres = Genre::all();
+        return view('movies.edit', compact('movie', 'genres'));
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
+    // 5. Güncellenen Verileri Kaydeden Metot
     public function update(Request $request, Movie $movie)
     {
-        //
+        // A) Validasyon
+        $validated = $request->validate([
+            'title' => 'required|string|max:255',
+            'genre_id' => 'required|exists:genres,id',
+            'director' => 'required|string|max:255',
+            'release_year' => 'required|integer|min:1900|max:' . (date('Y') + 2),
+            'rating' => 'required|numeric|min:0|max:10',
+            'description' => 'required|string|min:10',
+            'poster_image' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048',
+        ], [
+            'title.required' => 'Film başlığı zorunludur.',
+            'genre_id.required' => 'Lütfen bir film türü seçin.',
+        ]);
+
+        // B) Yeni bir afiş resmi yüklendiyse:
+        if ($request->hasFile('poster_image')) {
+            // Varsa eski yerel resmi storage'dan sil (sunucuda çöp dosya birikmesin)
+            if ($movie->poster_image && Storage::disk('public')->exists($movie->poster_image)) {
+                Storage::disk('public')->delete($movie->poster_image);
+            }
+
+            // Yeni resmi kaydet
+            $validated['poster_image'] = $request->file('poster_image')->store('posters', 'public');
+        }
+
+        // C) Modeli Güncelle
+        $movie->update($validated);
+
+        // D) Detay Sayfasına Yönlendir
+        return redirect()->route('movies.show', $movie)->with('success', 'Film bilgileri başarıyla güncellendi! ✨');
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
+    // 6. Filmi Silen Metot
     public function destroy(Movie $movie)
     {
-        //
+        // Varsa filmin afiş resmini storage'dan sil
+        if ($movie->poster_image && Storage::disk('public')->exists($movie->poster_image)) {
+            Storage::disk('public')->delete($movie->poster_image);
+        }
+
+        // Filmi veritabanından sil (ilişkili yorumlar cascade sayesinde otomatik silinir)
+        $movie->delete();
+
+        return redirect()->route('movies.index')->with('success', 'Film ve ilişkili tüm yorumlar başarıyla silindi. 🗑️');
     }
 }
