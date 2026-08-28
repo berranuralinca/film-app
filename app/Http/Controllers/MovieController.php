@@ -100,7 +100,13 @@ class MovieController extends Controller
      */
     public function show(Movie $movie)
     {
-        //
+        // İlişkileri yüklüyoruz
+        $movie->load(['genre', 'comments' => function($query) {
+            $query->latest();
+        }]);
+
+        // View'a 'movie' değişkenini gönderiyoruz
+        return view('movies.show', compact('movie'));
     }
 
     /**
