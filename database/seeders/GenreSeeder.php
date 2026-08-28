@@ -24,8 +24,8 @@ class GenreSeeder extends Seeder
 
             foreach ($genres as $name) {
                 Genre::create([
-                    "name"->$name,
-                    "slug"->Str::slug($name),
+                    "name"=>$name,
+                    "slug"=>Str::slug($name),
                 ]);
             }
     }       
