@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Movie;
 use App\Models\Genre;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 
 class MovieController extends Controller
 {
@@ -55,22 +56,45 @@ class MovieController extends Controller
         return view('movies.index', compact('movies', 'genres'));
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
     public function create()
     {
-        //
+        // Formdaki dropdown için tüm türleri çekiyoruz
+        $genres = Genre::all();
+        return view('movies.create', compact('genres'));
     }
-
-    /**
-     * Store a newly created resource in storage.
-     */
+    // 2. Formdan Gelen Veriyi Kaydeden Metot
     public function store(Request $request)
     {
-        //
+        // A) Validasyon (Doğrulama) Kuralları
+        $validated = $request->validate([
+            'title' => 'required|string|max:255',
+            'genre_id' => 'required|exists:genres,id',
+            'director' => 'required|string|max:255',
+            'release_year' => 'required|integer|min:1900|max:' . (date('Y') + 2),
+            'rating' => 'required|numeric|min:0|max:10',
+            'description' => 'required|string|min:10',
+            'poster_image' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048', // Max 2MB görsel
+        ], [
+            // Özel Türkçe Hata Mesajları
+            'title.required' => 'Film başlığı zorunludur.',
+            'genre_id.required' => 'Lütfen bir film türü seçin.',
+            'release_year.min' => 'Geçerli bir çıkış yılı giriniz.',
+            'rating.max' => 'Puan en fazla 10 olabilir.',
+            'poster_image.image' => 'Yüklenen dosya geçerli bir resim olmalıdır.',
+            'poster_image.max' => 'Afiş boyutu en fazla 2MB olabilir.',
+        ]);
+        // B) Afiş Resmi Yüklenmişse Kaydet
+        if ($request->hasFile('poster_image')) {
+            // 'storage/app/public/posters' altına yükler ve yolunu döner
+            $path = $request->file('poster_image')->store('posters', 'public');
+            $validated['poster_image'] = $path;
+        }
+        // C) Veritabanına Kaydet
+        Movie::create($validated);
+        // D) Başarı Mesajıyla Listeye Yönlendir
+        return redirect()->route('movies.index')->with('success', 'Film başarıyla eklendi! 🎬');
     }
-
+    
     /**
      * Display the specified resource.
      */
